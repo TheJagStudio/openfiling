@@ -7,7 +7,7 @@ public document is automatically sanitized — PII and CUI redacted by **Claude*
 
 [![OpenFiling landing page](docs/demo/landing.png)](docs/demo/openfiling-demo.mp4)
 
-▶️ **[Watch the demo (with voice-over)](docs/demo/openfiling-demo.mp4)** — direct-to-S3 upload, AI redaction of PII/CUI,
+▶️ **[Watch the demo on YouTube](https://www.youtube.com/watch?v=PIha3tCbv_w)** — direct-to-S3 upload, AI redaction of PII/CUI,
 filing with S-signature, examiner queue & workflow, public TSDR-style status page, admin health & audit log.
 (1920×1080 · 30 fps · 8 Mbps · 67 s with voice-over; recorded with [`docs/demo/record-demo.mjs`](docs/demo/record-demo.mjs).)
 
