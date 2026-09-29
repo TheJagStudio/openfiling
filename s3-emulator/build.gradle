@@ -1,0 +1,85 @@
+plugins {
+	id 'java'
+	id 'jacoco'
+	id 'org.springframework.boot' version '4.1.1'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'gov.openfiling'
+version = '0.0.1-SNAPSHOT'
+description = 'OpenFiling local S3 emulator (AWS SigV4-verifying, path-style, file-system backed, S3 event notifications)'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+ext {
+	set('awsSdkVersion', '2.31.0')
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+	// The integration tests talk to the emulator with the REAL AWS SDK v2, configured exactly like filing-api.
+	testImplementation 'software.amazon.awssdk:s3'
+	testImplementation 'org.awaitility:awaitility'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+dependencyManagement {
+	imports {
+		mavenBom "software.amazon.awssdk:bom:${awsSdkVersion}"
+	}
+}
+
+tasks.named('bootRun') {
+	// STORAGE_ROOT defaults to ../data/buckets, i.e. <repo>/data/buckets when started from this folder.
+	workingDir = projectDir
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+	maxHeapSize = '768m'
+	finalizedBy tasks.named('jacocoTestReport')
+}
+
+tasks.named('jacocoTestReport') {
+	dependsOn tasks.named('test')
+	reports {
+		xml.required = true
+		html.required = true
+	}
+	classDirectories.setFrom(files(sourceSets.main.output.classesDirs.collect {
+		fileTree(dir: it, exclude: ['**/S3EmulatorApplication*'])
+	}))
+}
+
+tasks.named('jacocoTestCoverageVerification') {
+	dependsOn tasks.named('jacocoTestReport')
+	violationRules {
+		rule {
+			limit {
+				counter = 'LINE'
+				minimum = 0.80
+			}
+		}
+	}
+	classDirectories.setFrom(tasks.named('jacocoTestReport').get().classDirectories)
+}
+
+tasks.named('check') {
+	dependsOn tasks.named('jacocoTestCoverageVerification')
+}
+
+// Only the executable Spring Boot jar is shipped.
+tasks.named('jar') {
+	enabled = false
+}

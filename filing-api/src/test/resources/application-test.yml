@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    url: ${TEST_DB_URL:jdbc:postgresql://localhost:5433/openfiling_test}
+    hikari:
+      maximum-pool-size: 5
+  flyway:
+    # Never wipe the shared test database; tests create unique rows and clean up after themselves.
+    clean-disabled: true
+
+app:
+  jwt:
+    key-dir: build/test-keys
+  security:
+    auth-rate-limit-per-minute: 100000
+  scheduling:
+    enabled: false
+  seed:
+    enabled: false
+
+logging:
+  level:
+    root: warn
+    gov.openfiling: info

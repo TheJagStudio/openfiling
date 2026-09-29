@@ -1,0 +1,269 @@
+@layer ng-icon, theme, base, components, utilities;
+@import 'tailwindcss';
+@import './app/shared/core/css/tailwind';
+@plugin "tailwindcss-animate";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * OpenFiling design tokens — "federal portal" identity:
+ * deep navy/indigo primary, cool slate neutrals, a restrained seal-gold accent (--seal),
+ * Public Sans (the USWDS typeface) with a system fallback. AA contrast in both themes.
+ */
+:root {
+  --radius: 0.5rem;
+  --font-sans: 'Public Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', 'Cascadia Code', Menlo, Consolas, monospace;
+
+  --background: oklch(0.992 0.002 250);
+  --foreground: oklch(0.2 0.03 262);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2 0.03 262);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2 0.03 262);
+  --primary: oklch(0.36 0.13 266);
+  --primary-foreground: oklch(0.985 0.005 250);
+  --secondary: oklch(0.955 0.01 258);
+  --secondary-foreground: oklch(0.28 0.06 264);
+  --muted: oklch(0.962 0.006 255);
+  --muted-foreground: oklch(0.5 0.025 260);
+  --accent: oklch(0.95 0.018 262);
+  --accent-foreground: oklch(0.28 0.08 264);
+  --destructive: oklch(0.55 0.21 27);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.905 0.01 258);
+  --input: oklch(0.88 0.012 258);
+  --ring: oklch(0.5 0.16 266);
+  --seal: oklch(0.72 0.13 80);
+  --seal-foreground: oklch(0.3 0.06 70);
+  --navy: oklch(0.26 0.09 266);
+  --navy-foreground: oklch(0.97 0.01 250);
+  --chart-1: oklch(0.36 0.13 266);
+  --chart-2: oklch(0.55 0.15 255);
+  --chart-3: oklch(0.7 0.12 230);
+  --chart-4: oklch(0.72 0.13 80);
+  --chart-5: oklch(0.6 0.16 25);
+  --sidebar: oklch(0.985 0.003 250);
+  --sidebar-foreground: oklch(0.2 0.03 262);
+  --sidebar-primary: oklch(0.36 0.13 266);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.95 0.018 262);
+  --sidebar-accent-foreground: oklch(0.28 0.08 264);
+  --sidebar-border: oklch(0.905 0.01 258);
+  --sidebar-ring: oklch(0.5 0.16 266);
+}
+
+.dark {
+  --background: oklch(0.16 0.02 265);
+  --foreground: oklch(0.96 0.008 255);
+  --card: oklch(0.2 0.025 265);
+  --card-foreground: oklch(0.96 0.008 255);
+  --popover: oklch(0.21 0.027 265);
+  --popover-foreground: oklch(0.96 0.008 255);
+  --primary: oklch(0.76 0.11 262);
+  --primary-foreground: oklch(0.2 0.05 266);
+  --secondary: oklch(0.27 0.03 265);
+  --secondary-foreground: oklch(0.95 0.01 255);
+  --muted: oklch(0.25 0.025 265);
+  --muted-foreground: oklch(0.72 0.02 258);
+  --accent: oklch(0.28 0.04 265);
+  --accent-foreground: oklch(0.95 0.01 255);
+  --destructive: oklch(0.7 0.18 23);
+  --destructive-foreground: oklch(0.2 0.02 265);
+  --border: oklch(1 0 0 / 11%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: oklch(0.72 0.12 262);
+  --seal: oklch(0.8 0.12 82);
+  --seal-foreground: oklch(0.25 0.05 70);
+  --navy: oklch(0.12 0.03 266);
+  --navy-foreground: oklch(0.95 0.01 250);
+  --chart-1: oklch(0.76 0.11 262);
+  --chart-2: oklch(0.66 0.14 250);
+  --chart-3: oklch(0.78 0.1 220);
+  --chart-4: oklch(0.8 0.12 82);
+  --chart-5: oklch(0.7 0.16 25);
+  --sidebar: oklch(0.2 0.025 265);
+  --sidebar-foreground: oklch(0.96 0.008 255);
+  --sidebar-primary: oklch(0.76 0.11 262);
+  --sidebar-primary-foreground: oklch(0.2 0.05 266);
+  --sidebar-accent: oklch(0.28 0.04 265);
+  --sidebar-accent-foreground: oklch(0.95 0.01 255);
+  --sidebar-border: oklch(1 0 0 / 11%);
+  --sidebar-ring: oklch(0.72 0.12 262);
+}
+
+@theme inline {
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-seal: var(--seal);
+  --color-seal-foreground: var(--seal-foreground);
+  --color-navy: var(--navy);
+  --color-navy-foreground: var(--navy-foreground);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type='number'] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--muted-foreground);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-track {
+  border-radius: 5px;
+  background: var(--muted);
+}
+
+/* ---------- OpenFiling app-level styles ---------- */
+:root {
+  color-scheme: light;
+}
+.dark {
+  color-scheme: dark;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  :focus-visible {
+    outline-color: var(--ring);
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.012em;
+  }
+}
+
+@layer components {
+  /* Subtle engraved-paper texture used on hero/official panels. */
+  .paper-grid {
+    background-image:
+      linear-gradient(color-mix(in oklch, var(--primary) 7%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in oklch, var(--primary) 7%, transparent) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+  /* ZardUI tab strips scroll horizontally on narrow screens instead of widening the page. */
+  [data-slot='tab-group'] {
+    min-width: 0;
+  }
+  [data-slot='tab-group'] > nav[role='tablist'] {
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .field-label {
+    @apply text-sm font-medium;
+  }
+  .field-hint {
+    @apply text-muted-foreground text-xs;
+  }
+  .field-error {
+    @apply text-destructive text-xs;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Print: filing receipts and status pages print cleanly on paper. */
+@media print {
+  :root,
+  .dark {
+    --background: #fff;
+    --foreground: #000;
+    --card: #fff;
+    --muted: #f4f4f5;
+    --muted-foreground: #3f3f46;
+    --border: #a1a1aa;
+    --primary: #1e2a78;
+    color-scheme: light;
+  }
+  @page {
+    margin: 16mm 14mm;
+  }
+  body {
+    font-size: 10.5pt;
+  }
+  a[href]::after {
+    content: none;
+  }
+  .print\:break-inside-avoid {
+    break-inside: avoid;
+  }
+  z-sonner,
+  [data-sonner-toaster] {
+    display: none !important;
+  }
+}

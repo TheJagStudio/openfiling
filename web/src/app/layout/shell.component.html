@@ -1,0 +1,239 @@
+<a
+  href="#main"
+  class="bg-primary text-primary-foreground sr-only z-[60] rounded-md px-3 py-2 text-sm font-medium focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+  (click)="focusMain($event)"
+  >Skip to main content</a
+>
+
+<!-- Official-style banner strip -->
+<div class="bg-navy text-navy-foreground print:hidden">
+  <div class="mx-auto flex max-w-7xl items-center gap-2 px-4 py-1.5 text-[12px] sm:px-6">
+    <span class="bg-seal inline-block size-2 rounded-full" aria-hidden="true"></span>
+    <span class="opacity-90">An open, free patent filing portal. Demonstration system — not affiliated with the USPTO.</span>
+    <a href="/swagger-ui.html" target="_blank" rel="noopener" class="ml-auto hidden underline-offset-2 opacity-90 hover:underline sm:inline">
+      API documentation
+    </a>
+  </div>
+</div>
+
+<header class="bg-background/90 supports-backdrop-filter:bg-background/75 sticky top-0 z-40 border-b backdrop-blur print:hidden">
+  <div class="mx-auto flex h-16 max-w-7xl items-center gap-2 px-4 sm:px-6">
+    <button type="button" z-button zType="ghost" zSize="icon" class="lg:hidden" aria-label="Open navigation menu" (click)="openMobileNav()">
+      <ng-icon name="lucideMenu" aria-hidden="true" />
+    </button>
+
+    <a
+      routerLink="/"
+      class="focus-visible:ring-ring/50 mr-3 flex items-center gap-2.5 rounded-md outline-none focus-visible:ring-2"
+      aria-label="OpenFiling home"
+    >
+      <app-brand-mark [size]="30" />
+      <span class="flex flex-col leading-none">
+        <span class="text-[16px] font-bold tracking-tight">OpenFiling</span>
+        <span class="text-muted-foreground hidden text-[10.5px] font-medium tracking-wider uppercase sm:block">Patent Center</span>
+      </span>
+    </a>
+
+    <nav aria-label="Primary" class="hidden lg:block">
+      <ul class="flex items-center gap-0.5">
+        @for (item of navItems(); track item.path) {
+          <li>
+            <a
+              [routerLink]="item.path"
+              routerLinkActive="text-foreground after:bg-primary"
+              [routerLinkActiveOptions]="{ exact: !!item.exact }"
+              ariaCurrentWhenActive="page"
+              class="text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 relative rounded-md px-3 py-2 text-sm font-medium transition-colors outline-none after:absolute after:inset-x-3 after:-bottom-[13px] after:h-0.5 after:rounded-full focus-visible:ring-2"
+              >{{ item.label }}</a
+            >
+          </li>
+        }
+        @if (auth.isAdmin()) {
+          <li>
+            <button
+              type="button"
+              z-dropdown
+              [zDropdownMenu]="adminMenu"
+              class="text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium outline-none focus-visible:ring-2"
+              [class.text-foreground]="isAdminRoute()"
+            >
+              Admin <ng-icon name="lucideChevronDown" class="size-3.5" aria-hidden="true" />
+            </button>
+            <z-dropdown-menu-content #adminMenu="zDropdownMenuContent" zAlign="start" class="w-64">
+              @for (a of adminNav; track a.path) {
+                <z-dropdown-menu-item (click)="go(a.path)">
+                  <ng-icon [name]="a.icon" aria-hidden="true" />
+                  <span class="flex flex-col">
+                    <span>{{ a.label }}</span>
+                    <span class="text-muted-foreground text-xs">{{ a.description }}</span>
+                  </span>
+                </z-dropdown-menu-item>
+              }
+            </z-dropdown-menu-content>
+          </li>
+        }
+      </ul>
+    </nav>
+
+    <div class="ml-auto flex items-center gap-1">
+      @if (!auth.isAuthenticated()) {
+        @for (item of publicShortcuts; track item.path) {
+          <a z-button zType="ghost" zSize="icon" class="lg:hidden" [routerLink]="item.path" [attr.aria-label]="item.label">
+            <ng-icon [name]="item.icon" aria-hidden="true" />
+          </a>
+        }
+      }
+      <app-theme-toggle />
+
+      @if (auth.user(); as user) {
+        <app-notification-bell />
+        <button
+          type="button"
+          z-dropdown
+          [zDropdownMenu]="userMenu"
+          class="focus-visible:ring-ring/50 ml-1 rounded-full outline-none focus-visible:ring-2"
+          [attr.aria-label]="'Account menu for ' + user.displayName"
+        >
+          <z-avatar [zFallback]="auth.initials()" zSize="sm" [zAlt]="user.displayName" />
+        </button>
+        <z-dropdown-menu-content #userMenu="zDropdownMenuContent" zAlign="end" class="w-64">
+          <z-dropdown-menu-label>
+            <div class="flex flex-col gap-1">
+              <span class="truncate text-sm font-medium">{{ user.displayName }}</span>
+              <span class="text-muted-foreground truncate text-xs font-normal">{{ user.email }}</span>
+              <span class="flex flex-wrap gap-1 pt-0.5">
+                @for (r of user.roles; track r) {
+                  <span class="bg-primary/10 text-primary rounded px-1.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase">{{ roleLabel(r) }}</span>
+                }
+                @if (user.artUnit) {
+                  <span class="bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-[10px] font-semibold">AU {{ user.artUnit }}</span>
+                }
+              </span>
+            </div>
+          </z-dropdown-menu-label>
+          <z-dropdown-menu-separator />
+          <z-dropdown-menu-item (click)="go('/dashboard')"><ng-icon name="lucideLayoutDashboard" aria-hidden="true" /> Dashboard</z-dropdown-menu-item>
+          <z-dropdown-menu-item (click)="go('/notifications')"><ng-icon name="lucideBell" aria-hidden="true" /> Notifications</z-dropdown-menu-item>
+          <z-dropdown-menu-item (click)="go('/account')"><ng-icon name="lucideUserCog" aria-hidden="true" /> Account &amp; security</z-dropdown-menu-item>
+          <z-dropdown-menu-separator />
+          <z-dropdown-menu-item (click)="logout()"><ng-icon name="lucideLogOut" aria-hidden="true" /> Sign out</z-dropdown-menu-item>
+        </z-dropdown-menu-content>
+      } @else {
+        <a z-button zType="ghost" routerLink="/login" [queryParams]="loginQuery()" class="hidden sm:inline-flex">Sign in</a>
+        <a z-button routerLink="/register">Create account</a>
+      }
+    </div>
+  </div>
+</header>
+
+<main id="main" tabindex="-1" class="flex-1 outline-none">
+  <router-outlet />
+</main>
+
+<footer class="bg-muted/40 border-t print:hidden">
+  <div class="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-5">
+    <div class="space-y-3 md:col-span-2">
+      <div class="flex items-center gap-2">
+        <app-brand-mark [size]="24" />
+        <span class="font-bold tracking-tight">OpenFiling</span>
+      </div>
+      <p class="text-muted-foreground max-w-md text-sm">
+        A free, open patent application intake and document management portal. Files go straight to encrypted object storage;
+        public copies are sanitized for PII and CUI before anyone else can read them.
+      </p>
+    </div>
+    <nav aria-label="Filing" class="text-sm">
+      <h2 class="mb-2 font-semibold">Filing</h2>
+      <ul class="text-muted-foreground space-y-1.5">
+        <li><a routerLink="/applications/new" class="hover:text-foreground">Start a new application</a></li>
+        <li><a routerLink="/applications" class="hover:text-foreground">My applications</a></li>
+        <li><a routerLink="/dashboard" class="hover:text-foreground">Dashboard</a></li>
+      </ul>
+    </nav>
+    <nav aria-label="Public records" class="text-sm">
+      <h2 class="mb-2 font-semibold">Public records</h2>
+      <ul class="text-muted-foreground space-y-1.5">
+        <li><a routerLink="/search" class="hover:text-foreground">Search published applications</a></li>
+        <li><a routerLink="/status" class="hover:text-foreground">Application status lookup</a></li>
+      </ul>
+    </nav>
+    <nav aria-label="Developers" class="text-sm">
+      <h2 class="mb-2 font-semibold">Developers</h2>
+      <ul class="text-muted-foreground space-y-1.5">
+        <li><a href="/swagger-ui.html" target="_blank" rel="noopener" class="hover:text-foreground">API reference (Swagger UI)</a></li>
+        <li><a href="/v3/api-docs" target="_blank" rel="noopener" class="hover:text-foreground">OpenAPI document</a></li>
+      </ul>
+    </nav>
+  </div>
+  <div class="text-muted-foreground mx-auto flex max-w-7xl flex-col gap-1 border-t px-4 py-4 text-xs sm:flex-row sm:justify-between sm:px-6">
+    <span>© {{ year }} OpenFiling · Open source · Demonstration data only</span>
+    <span>Documents are stored with pre-signed, time-limited URLs · All sensitive actions are audited</span>
+  </div>
+</footer>
+
+<z-sonner position="bottom-right" [closeButton]="true" [richColors]="true" />
+
+<ng-template #mobileNav let-sheetRef="sheetRef">
+  <nav aria-label="Mobile" class="-mt-2 px-2 pb-4">
+    <ul class="space-y-0.5">
+      @for (item of navItems(); track item.path) {
+        <li>
+          <a
+            [routerLink]="item.path"
+            routerLinkActive="bg-muted text-foreground"
+            [routerLinkActiveOptions]="{ exact: !!item.exact }"
+            ariaCurrentWhenActive="page"
+            class="text-muted-foreground hover:bg-muted hover:text-foreground flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium"
+            (click)="sheetRef.close()"
+          >
+            <ng-icon [name]="item.icon" aria-hidden="true" />
+            <span class="flex flex-col">
+              <span>{{ item.label }}</span>
+              <span class="text-muted-foreground text-xs font-normal">{{ item.description }}</span>
+            </span>
+          </a>
+        </li>
+      }
+    </ul>
+    @if (auth.isAdmin()) {
+      <p class="text-muted-foreground mt-4 px-3 text-xs font-semibold tracking-wider uppercase">Administration</p>
+      <ul class="mt-1 space-y-0.5">
+        @for (a of adminNav; track a.path) {
+          <li>
+            <a
+              [routerLink]="a.path"
+              routerLinkActive="bg-muted text-foreground"
+              class="text-muted-foreground hover:bg-muted hover:text-foreground flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium"
+              (click)="sheetRef.close()"
+            >
+              <ng-icon [name]="a.icon" aria-hidden="true" /> {{ a.label }}
+            </a>
+          </li>
+        }
+      </ul>
+    }
+    <div class="mt-4 space-y-0.5 border-t pt-4">
+      @if (auth.isAuthenticated()) {
+        <a routerLink="/notifications" class="hover:bg-muted flex items-center gap-3 rounded-md px-3 py-2 text-sm" (click)="sheetRef.close()">
+          <ng-icon name="lucideBell" aria-hidden="true" /> Notifications
+          @if (unread.count()) {
+            <span class="bg-destructive ml-auto rounded-full px-1.5 text-[11px] font-semibold text-white">{{ unread.count() }}</span>
+          }
+        </a>
+        <a routerLink="/account" class="hover:bg-muted flex items-center gap-3 rounded-md px-3 py-2 text-sm" (click)="sheetRef.close()">
+          <ng-icon name="lucideUserCog" aria-hidden="true" /> Account &amp; security
+        </a>
+        <button type="button" class="hover:bg-muted flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm" (click)="sheetRef.close(); logout()">
+          <ng-icon name="lucideLogOut" aria-hidden="true" /> Sign out
+        </button>
+      } @else {
+        <a routerLink="/login" class="hover:bg-muted flex items-center gap-3 rounded-md px-3 py-2 text-sm" (click)="sheetRef.close()">
+          <ng-icon name="lucideLogIn" aria-hidden="true" /> Sign in
+        </a>
+        <a routerLink="/register" class="hover:bg-muted flex items-center gap-3 rounded-md px-3 py-2 text-sm" (click)="sheetRef.close()">
+          <ng-icon name="lucideUserPlus" aria-hidden="true" /> Create account
+        </a>
+      }
+    </div>
+  </nav>
+</ng-template>

@@ -1,0 +1,142 @@
+plugins {
+	id 'java-library'
+	id 'application'
+	id 'jacoco'
+}
+
+group = 'gov.openfiling'
+version = '0.0.1-SNAPSHOT'
+description = 'OpenFiling automated PII/CUI redaction function (plain Java 21 AWS Lambda + local Lambda runtime)'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+sourceSets {
+	// Demo PDF generator (not shipped in the Lambda zip):  .\gradlew.bat generateSamples
+	samples {
+		compileClasspath += sourceSets.main.output
+		runtimeClasspath += sourceSets.main.output
+	}
+}
+
+configurations {
+	samplesImplementation.extendsFrom implementation
+	samplesRuntimeOnly.extendsFrom runtimeOnly
+	all {
+		// PDFBox logs through commons-logging; route it to SLF4J instead.
+		exclude group: 'commons-logging', module: 'commons-logging'
+	}
+}
+
+dependencies {
+	// Version alignment only (no Spring code on the classpath).
+	implementation platform('org.springframework.boot:spring-boot-dependencies:4.1.1')
+	implementation platform('software.amazon.awssdk:bom:2.31.0')
+
+	implementation 'tools.jackson.core:jackson-databind'
+	implementation 'com.amazonaws:aws-lambda-java-core:1.2.3'
+	implementation('software.amazon.awssdk:s3') {
+		// keep the deployment package lean: blocking URLConnection client only
+		exclude group: 'software.amazon.awssdk', module: 'netty-nio-client'
+		exclude group: 'software.amazon.awssdk', module: 'apache-client'
+	}
+	implementation 'software.amazon.awssdk:url-connection-client'
+	implementation 'org.apache.pdfbox:pdfbox:3.0.8'
+	implementation 'com.anthropic:anthropic-java:2.66.0'
+	implementation 'org.slf4j:slf4j-api'
+	runtimeOnly 'org.slf4j:jcl-over-slf4j'
+	runtimeOnly 'org.slf4j:slf4j-simple'
+
+	testImplementation 'org.junit.jupiter:junit-jupiter'
+	testImplementation 'org.assertj:assertj-core'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+application {
+	mainClass = 'gov.openfiling.redaction.local.LocalLambdaRuntime'
+}
+
+tasks.named('run', JavaExec) {
+	workingDir = projectDir
+	// Local runs talk to the s3-emulator unless told otherwise; the deployed Lambda has no S3_ENDPOINT (real S3).
+	environment 'S3_ENDPOINT', System.getenv('S3_ENDPOINT') ?: 'http://localhost:9000'
+	environment 'S3_PATH_STYLE', System.getenv('S3_PATH_STYLE') ?: 'true'
+	jvmArgs '-Dorg.slf4j.simpleLogger.defaultLogLevel=info',
+			'-Dorg.slf4j.simpleLogger.log.org.apache.pdfbox=warn',
+			'-Dorg.slf4j.simpleLogger.log.org.apache.fontbox=warn',
+			'-Dorg.slf4j.simpleLogger.showDateTime=true'
+}
+
+tasks.register('generateSamples', JavaExec) {
+	group = 'application'
+	description = 'Writes the demo PDFs (fictitious PII/CUI) to ../samples.'
+	classpath = sourceSets.samples.runtimeClasspath
+	mainClass = 'gov.openfiling.redaction.samples.SamplePdfGenerator'
+	args file('../samples').absolutePath
+	jvmArgs '-Dorg.slf4j.simpleLogger.log.org.apache.pdfbox=warn', '-Dorg.slf4j.simpleLogger.log.org.apache.fontbox=warn'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+	maxHeapSize = '1g'
+	systemProperty 'org.slf4j.simpleLogger.log.org.apache.pdfbox', 'warn'
+	systemProperty 'org.slf4j.simpleLogger.log.org.apache.fontbox', 'warn'
+	finalizedBy tasks.named('jacocoTestReport')
+}
+
+// Excluded from the coverage gate: the thin adapters over the real AWS S3 and Anthropic clients.
+def coverageExcludes = ['**/storage/S3ObjectStore*', '**/detect/AnthropicMessageClient*']
+
+tasks.named('jacocoTestReport') {
+	dependsOn tasks.named('test')
+	reports {
+		xml.required = true
+		html.required = true
+	}
+	classDirectories.setFrom(files(sourceSets.main.output.classesDirs.collect {
+		fileTree(dir: it, exclude: coverageExcludes)
+	}))
+}
+
+tasks.named('jacocoTestCoverageVerification') {
+	dependsOn tasks.named('jacocoTestReport')
+	violationRules {
+		rule {
+			limit {
+				counter = 'LINE'
+				minimum = 0.80
+			}
+		}
+	}
+	classDirectories.setFrom(tasks.named('jacocoTestReport').get().classDirectories)
+}
+
+tasks.named('check') {
+	dependsOn tasks.named('jacocoTestCoverageVerification')
+	dependsOn tasks.named('samplesClasses') // keep the sample generator compiling
+}
+
+// AWS Lambda deployment package (Java zip layout: classes at the root, dependencies in lib/).
+// Built only, never deployed:  .\gradlew.bat lambdaZip
+tasks.register('lambdaZip', Zip) {
+	group = 'build'
+	description = 'Builds the AWS Lambda deployment zip for the redaction function.'
+	archiveFileName = "openfiling-redaction-lambda-${project.version}.zip"
+	destinationDirectory = layout.buildDirectory.dir('distributions')
+	from tasks.named('compileJava')
+	from tasks.named('processResources')
+	into('lib') {
+		from configurations.runtimeClasspath
+	}
+}
+
+tasks.named('assemble') {
+	dependsOn tasks.named('lambdaZip')
+}

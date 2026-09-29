@@ -1,0 +1,80 @@
+# Optional container run (requires Docker Desktop). The primary local path is .\dev.ps1 up,
+# which uses the portable toolchain in D:\JavaSpring\tools and needs no Docker.
+#
+# Pre-signed URLs are generated for S3_PUBLIC_ENDPOINT, which must be reachable from the *browser*
+# (http://localhost:9000), while containers talk to the emulator as http://s3-emulator:9000.
+name: openfiling
+
+x-internal: &internal
+  INTERNAL_TOKEN: ${INTERNAL_TOKEN:-dev-internal-token-change-me}
+
+x-s3: &s3
+  S3_ACCESS_KEY: openfiling-local
+  S3_SECRET_KEY: openfiling-local-secret
+  S3_REGION: us-east-1
+
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: openfiling
+      POSTGRES_USER: openfiling
+      POSTGRES_PASSWORD: openfiling
+    ports: ["5433:5432"]
+    volumes: [pgdata:/var/lib/postgresql]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openfiling"]
+      interval: 5s
+      retries: 20
+
+  s3-emulator:
+    build: ./s3-emulator
+    environment:
+      <<: [*internal, *s3]
+      STORAGE_ROOT: /data/buckets
+      CORS_ORIGINS: http://localhost:4200
+      REDACTION_INVOKE_URL: http://redaction-lambda:9001/2015-03-31/functions/openfiling-redaction/invocations
+      FILING_API_EVENTS_URL: http://filing-api:8080/internal/v1/storage/events
+    ports: ["9000:9000"]
+    volumes: [buckets:/data/buckets]
+
+  redaction-lambda:
+    build: ./redaction-lambda
+    environment:
+      <<: [*internal, *s3]
+      S3_ENDPOINT: http://s3-emulator:9000
+      S3_PATH_STYLE: "true"
+      CALLBACK_URL: http://filing-api:8080/internal/v1/redactions/events
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-opus-5-5}
+      CLAUDE_EFFORT: ${CLAUDE_EFFORT:-medium}
+    depends_on: [s3-emulator]
+
+  filing-api:
+    build: ./filing-api
+    environment:
+      <<: [*internal, *s3]
+      SPRING_PROFILES_ACTIVE: dev
+      DB_URL: jdbc:postgresql://postgres:5432/openfiling
+      DB_USER: openfiling
+      DB_PASSWORD: openfiling
+      JWT_KEY_DIR: /data/keys
+      S3_ENDPOINT: http://s3-emulator:9000
+      S3_PUBLIC_ENDPOINT: http://localhost:9000
+      REDACTION_INVOKE_URL: http://redaction-lambda:9001/2015-03-31/functions/openfiling-redaction/invocations
+      REDACTION_HEALTH_URL: http://redaction-lambda:9001/health
+    volumes: [keys:/data/keys]
+    ports: ["8080:8080"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      s3-emulator: { condition: service_started }
+
+  web:
+    build: ./web
+    ports: ["4200:8080"]
+    depends_on: [filing-api]
+
+volumes:
+  pgdata: {}
+  keys: {}
+  buckets: {}

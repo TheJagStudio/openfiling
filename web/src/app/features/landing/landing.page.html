@@ -1,0 +1,206 @@
+<!-- Hero -->
+<section class="relative overflow-hidden border-b">
+  <div class="paper-grid pointer-events-none absolute inset-0 -z-10 [mask-image:radial-gradient(ellipse_at_top_left,black,transparent_70%)]" aria-hidden="true"></div>
+  <div
+    class="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(50rem_28rem_at_85%_0%,color-mix(in_oklch,var(--primary)_14%,transparent),transparent)]"
+    aria-hidden="true"
+  ></div>
+
+  <div class="mx-auto grid max-w-7xl items-center gap-12 px-4 pt-14 pb-16 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:pt-20 lg:pb-24">
+    <div>
+      <p class="text-primary mb-4 inline-flex items-center gap-2 text-xs font-semibold tracking-[0.14em] uppercase">
+        <span class="bg-seal inline-block h-3 w-1 rounded-sm" aria-hidden="true"></span>
+        Patent application intake &amp; document management
+      </p>
+      <h1 class="text-4xl leading-[1.08] font-semibold tracking-tight text-balance sm:text-5xl lg:text-[3.4rem]">
+        File patent applications with confidence — <span class="text-primary">from draft to public record.</span>
+      </h1>
+      <p class="text-muted-foreground mt-6 max-w-2xl text-lg text-pretty">
+        OpenFiling is a free, open filing portal. Upload large PDFs securely, follow every step of prosecution, and publish public copies that have
+        been automatically scrubbed of personal and controlled information.
+      </p>
+      <div class="mt-8 flex flex-wrap gap-3">
+        @if (auth.isAuthenticated()) {
+          <a z-button zSize="lg" class="h-11 px-5" routerLink="/applications/new">Start a new application <ng-icon name="lucideArrowRight" aria-hidden="true" /></a>
+          <a z-button zType="outline" zSize="lg" class="h-11 px-5" routerLink="/dashboard">Go to dashboard</a>
+        } @else {
+          <a z-button zSize="lg" class="h-11 px-5" routerLink="/register">Create a free account <ng-icon name="lucideArrowRight" aria-hidden="true" /></a>
+          <a z-button zType="outline" zSize="lg" class="h-11 px-5" routerLink="/search"><ng-icon name="lucideSearch" aria-hidden="true" /> Search published applications</a>
+        }
+      </div>
+
+      <form role="search" class="mt-10 max-w-lg" novalidate (submit)="submitLookup($event)" aria-labelledby="lookup-label">
+        <label id="lookup-label" for="hero-lookup" class="text-sm font-medium">Check the status of a published application</label>
+        <div class="mt-2 flex gap-2">
+          <div class="relative flex-1">
+            <ng-icon name="lucideScanSearch" class="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" aria-hidden="true" />
+            <input
+              id="hero-lookup"
+              z-input
+              class="h-10 pl-9 font-mono"
+              placeholder="19/000,123"
+              inputmode="numeric"
+              autocomplete="off"
+              [value]="lookup()"
+              (input)="lookup.set($any($event.target).value)"
+              [attr.aria-invalid]="!!lookupError()"
+              [attr.aria-describedby]="lookupError() ? 'lookup-err' : null"
+            />
+          </div>
+          <button type="submit" z-button zType="secondary" class="h-10 px-4">Look up</button>
+        </div>
+        @if (lookupError()) {
+          <p id="lookup-err" class="field-error mt-1.5">{{ lookupError() }}</p>
+        }
+      </form>
+    </div>
+
+    <!-- Illustrative "filing" panel -->
+    <div class="relative mx-auto mb-10 w-full max-w-md lg:mb-0 lg:max-w-none" aria-hidden="true">
+      <div class="bg-card rotate-[0.6deg] rounded-2xl border p-5 shadow-xl shadow-primary/5">
+        <div class="flex items-center justify-between border-b pb-3">
+          <div>
+            <p class="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase">Application</p>
+            <p class="font-mono text-sm font-semibold">19/000,123</p>
+          </div>
+          <span class="rounded-full bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-800 ring-1 ring-sky-600/20 ring-inset dark:bg-sky-500/10 dark:text-sky-300"
+            >Under examination</span
+          >
+        </div>
+        <p class="mt-3 text-sm font-semibold">Solid-state electrolyte with self-healing interphase</p>
+        <ul class="mt-4 space-y-2.5 text-xs">
+          <li class="flex items-center gap-3">
+            <span class="bg-primary/10 text-primary grid h-7 w-11 shrink-0 place-items-center rounded-md font-mono text-[10px] font-semibold">SPEC</span>
+            <span class="flex-1">
+              <span class="block font-medium">specification.pdf</span>
+              <span class="bg-muted mt-1 block h-1.5 overflow-hidden rounded-full"><span class="bg-primary block h-full w-full rounded-full"></span></span>
+            </span>
+            <span class="rounded-full bg-emerald-50 px-2 py-0.5 font-medium text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300">4 redactions</span>
+          </li>
+          <li class="flex items-center gap-3">
+            <span class="bg-primary/10 text-primary grid h-7 w-11 shrink-0 place-items-center rounded-md font-mono text-[10px] font-semibold">CLM</span>
+            <span class="flex-1">
+              <span class="block font-medium">claims.pdf</span>
+              <span class="bg-muted mt-1 block h-1.5 overflow-hidden rounded-full"><span class="bg-primary block h-full w-2/3 rounded-full"></span></span>
+            </span>
+            <span class="rounded-full bg-violet-50 px-2 py-0.5 font-medium text-violet-800 dark:bg-violet-500/10 dark:text-violet-300">Uploading 67%</span>
+          </li>
+          <li class="flex items-center gap-3">
+            <span class="bg-primary/10 text-primary grid h-7 w-11 shrink-0 place-items-center rounded-md font-mono text-[10px] font-semibold">ADS</span>
+            <span class="flex-1 font-medium">application-data-sheet.pdf</span>
+            <span class="text-muted-foreground">Restricted</span>
+          </li>
+        </ul>
+        <ol class="mt-5 space-y-3 border-t pt-4 text-xs">
+          <li class="flex gap-3"><span class="mt-1 size-2 rounded-full bg-sky-500"></span><span><b>Examination started</b> · Art unit 2100</span></li>
+          <li class="flex gap-3"><span class="mt-1 size-2 rounded-full bg-sky-500/60"></span><span>Docketed new case — ready for examination</span></li>
+          <li class="flex gap-3"><span class="bg-muted-foreground/50 mt-1 size-2 rounded-full"></span><span>Filed · confirmation 4821</span></li>
+        </ol>
+      </div>
+      <div class="bg-navy text-navy-foreground absolute -right-3 -bottom-16 hidden w-60 -rotate-2 rounded-xl p-4 text-xs shadow-lg ring-1 ring-white/10 sm:block">
+        <p class="text-seal font-semibold tracking-wider uppercase">Public copy</p>
+        <p class="mt-2 leading-relaxed">
+          Inventor contact: <span class="inline-block h-3 w-24 translate-y-0.5 rounded-sm bg-black ring-1 ring-white/30"></span><br />
+          SSN <span class="inline-block h-3 w-16 translate-y-0.5 rounded-sm bg-black ring-1 ring-white/30"></span> · <span class="text-seal/90">CUI marking removed</span>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Live stats -->
+<section class="border-b" aria-labelledby="stats-heading">
+  <h2 id="stats-heading" class="sr-only">Live public statistics</h2>
+  <dl class="bg-border mx-auto grid max-w-7xl grid-cols-2 gap-px sm:grid-cols-5" aria-live="polite">
+    @if (stats.isLoading()) {
+      @for (i of [1, 2, 3, 4, 5]; track i) {
+        <div class="bg-background space-y-2 px-6 py-6">
+          <z-skeleton class="h-3 w-24" />
+          <z-skeleton class="h-7 w-16" />
+        </div>
+      }
+    } @else if (statTiles().length) {
+      @for (t of statTiles(); track t.label) {
+        <div class="bg-background px-6 py-6">
+          <dt class="text-muted-foreground text-xs font-medium tracking-wide uppercase">{{ t.label }}</dt>
+          <dd class="tabular mt-1 text-2xl font-semibold">{{ fmt(t.value) }}</dd>
+        </div>
+      }
+    } @else {
+      <div class="bg-background text-muted-foreground col-span-full px-6 py-6 text-center text-sm">
+        Live statistics are unavailable right now — the filing API may be starting up.
+        <button type="button" z-button zType="link" zSize="sm" (click)="stats.reload()">Retry</button>
+      </div>
+    }
+  </dl>
+</section>
+
+<!-- Capabilities -->
+<section class="mx-auto max-w-7xl px-4 py-20 sm:px-6" aria-labelledby="cap-heading">
+  <div class="max-w-2xl">
+    <p class="text-primary text-xs font-semibold tracking-[0.14em] uppercase">What OpenFiling does</p>
+    <h2 id="cap-heading" class="mt-2 text-3xl font-semibold tracking-tight">Three guarantees, built into every filing</h2>
+  </div>
+  <div class="mt-10 grid gap-6 lg:grid-cols-3">
+    @for (c of capabilities; track c.title; let i = $index) {
+      <article class="bg-card flex flex-col rounded-2xl border p-6 shadow-xs">
+        <div class="flex items-center justify-between">
+          <span class="bg-primary text-primary-foreground grid size-11 place-items-center rounded-xl shadow-sm">
+            <ng-icon [name]="c.icon" class="size-5" aria-hidden="true" />
+          </span>
+          <span class="text-muted-foreground font-mono text-xs">0{{ i + 1 }}</span>
+        </div>
+        <h3 class="mt-5 text-lg font-semibold">{{ c.title }}</h3>
+        <p class="text-muted-foreground mt-2 text-sm leading-relaxed">{{ c.body }}</p>
+        <ul class="mt-5 space-y-1.5 border-t pt-4 text-sm">
+          @for (p of c.points; track p) {
+            <li class="flex items-center gap-2"><ng-icon name="lucideShieldCheck" class="text-primary size-4 shrink-0" aria-hidden="true" /> {{ p }}</li>
+          }
+        </ul>
+      </article>
+    }
+  </div>
+</section>
+
+<!-- How it works -->
+<section class="bg-muted/40 border-y" aria-labelledby="how-heading">
+  <div class="mx-auto max-w-7xl px-4 py-20 sm:px-6">
+    <div class="max-w-2xl">
+      <p class="text-primary text-xs font-semibold tracking-[0.14em] uppercase">How it works</p>
+      <h2 id="how-heading" class="mt-2 text-3xl font-semibold tracking-tight">From first draft to published patent</h2>
+    </div>
+    <ol class="mt-10 grid gap-4 md:grid-cols-5">
+      @for (s of steps; track s.title; let i = $index) {
+        <li class="bg-card relative rounded-xl border p-5">
+          <span class="text-primary flex items-center gap-2 text-xs font-semibold">
+            <span class="bg-primary/10 grid size-6 place-items-center rounded-full">{{ i + 1 }}</span>
+            <ng-icon [name]="s.icon" class="size-4" aria-hidden="true" />
+          </span>
+          <h3 class="mt-3 font-semibold">{{ s.title }}</h3>
+          <p class="text-muted-foreground mt-1 text-sm">{{ s.body }}</p>
+        </li>
+      }
+    </ol>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="mx-auto max-w-7xl px-4 py-20 sm:px-6">
+  <div class="bg-navy text-navy-foreground relative overflow-hidden rounded-2xl px-8 py-12 sm:px-12">
+    <div class="paper-grid pointer-events-none absolute inset-0 opacity-25" aria-hidden="true"></div>
+    <div class="relative flex flex-col items-start gap-6 lg:flex-row lg:items-center lg:justify-between">
+      <div class="max-w-2xl">
+        <h2 class="text-2xl font-semibold tracking-tight sm:text-3xl">Ready to file?</h2>
+        <p class="mt-2 opacity-85">Create a free inventor account in under a minute. Drafts are private to you until you submit.</p>
+      </div>
+      <div class="flex flex-wrap gap-3">
+        @if (auth.isAuthenticated()) {
+          <a z-button zSize="lg" class="bg-seal text-seal-foreground hover:bg-seal/90 h-11 px-5" routerLink="/applications/new">Start an application</a>
+        } @else {
+          <a z-button zSize="lg" class="bg-seal text-seal-foreground hover:bg-seal/90 h-11 px-5" routerLink="/register">Create account</a>
+          <a z-button zType="ghost" zSize="lg" class="h-11 px-5 text-white hover:bg-white/10 hover:text-white" routerLink="/login">Sign in</a>
+        }
+      </div>
+    </div>
+  </div>
+</section>

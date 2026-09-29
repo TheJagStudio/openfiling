@@ -1,0 +1,240 @@
+<div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+  @if (app.isLoading() && !app.hasValue()) {
+    <div class="space-y-4" aria-busy="true">
+      <z-skeleton class="h-4 w-48" />
+      <z-skeleton class="h-9 w-2/3" />
+      <z-skeleton class="h-24 w-full" />
+      <div class="grid gap-6 lg:grid-cols-[1fr_20rem]">
+        <z-skeleton class="h-96 w-full" />
+        <z-skeleton class="h-64 w-full" />
+      </div>
+    </div>
+  } @else if (notFound()) {
+    <div class="mx-auto max-w-xl py-16 text-center">
+      <p class="text-primary font-mono text-sm font-semibold">404</p>
+      <h1 class="mt-2 text-2xl font-semibold">Application not found</h1>
+      <p class="text-muted-foreground mt-3">
+        It may have been deleted, or you don’t have access. Applications are visible only to their owner and to examiners once filed.
+      </p>
+      <a z-button class="mt-6" routerLink="/applications"><ng-icon name="lucideArrowLeft" aria-hidden="true" /> Back to my applications</a>
+    </div>
+  } @else if (app.error()) {
+    <app-error-state [error]="app.error()" (retry)="reloadAll()" />
+  } @else if (app.hasValue()) {
+    @let a = app.value();
+    <!-- Header -->
+    <header class="space-y-4">
+      <app-breadcrumbs
+        [items]="[
+          auth.isExaminer() && !isOwner() ? { label: 'Examiner queue', link: '/examiner' } : { label: 'My applications', link: '/applications' },
+          { label: a.applicationNumberDisplay ?? 'Draft' }
+        ]"
+      />
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div class="min-w-0 space-y-2">
+          <p class="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+            <span class="text-foreground font-mono text-base font-semibold">{{ a.applicationNumberDisplay ?? 'Not yet filed' }}</span>
+            <span aria-hidden="true">·</span>
+            <span>{{ typeLabel(a.applicationType) }} application</span>
+            @if (a.published) {
+              <span class="rounded bg-sky-50 px-1.5 py-0.5 text-xs font-medium text-sky-800 dark:bg-sky-500/10 dark:text-sky-300">Published</span>
+            }
+          </p>
+          <h1 class="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">{{ a.title }}</h1>
+          <div class="flex flex-wrap items-center gap-2">
+            <app-status-badge [status]="a.status" [category]="a.statusCategory" />
+            <span class="text-sm">{{ a.statusLabel }}</span>
+          </div>
+        </div>
+      </div>
+
+      @if (a.actionRequired) {
+        <z-alert
+          class="border-amber-500/40 bg-amber-50 text-amber-950 dark:bg-amber-500/10 dark:text-amber-100"
+          zIcon="lucideTriangleAlert"
+          zTitle="Action required"
+          [zDescription]="statusMeta()?.explanation ?? 'This application is waiting for you.'"
+        />
+      }
+
+      <!-- Key facts -->
+      <dl class="bg-border grid grid-cols-2 gap-px overflow-hidden rounded-xl border sm:grid-cols-3 lg:grid-cols-6">
+        <div class="bg-card p-3.5">
+          <dt class="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">Filing date</dt>
+          <dd class="mt-0.5 text-sm font-medium">{{ date(a.filingDate) }}</dd>
+        </div>
+        <div class="bg-card p-3.5">
+          <dt class="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">Confirmation no.</dt>
+          <dd class="mt-0.5 font-mono text-sm font-medium">{{ a.confirmationNumber ?? '—' }}</dd>
+        </div>
+        <div class="bg-card p-3.5">
+          <dt class="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">First named inventor</dt>
+          <dd class="mt-0.5 truncate text-sm font-medium">{{ a.firstNamedInventor ?? '—' }}</dd>
+        </div>
+        <div class="bg-card p-3.5">
+          <dt class="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">Entity status</dt>
+          <dd class="mt-0.5 text-sm font-medium">{{ entityLabel(a.entityStatus) }}</dd>
+        </div>
+        <div class="bg-card p-3.5">
+          <dt class="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">Examiner · art unit</dt>
+          <dd class="mt-0.5 truncate text-sm font-medium">{{ a.examiner?.displayName ?? 'Unassigned' }}{{ a.artUnit ? ' · ' + a.artUnit : '' }}</dd>
+        </div>
+        <div class="bg-card p-3.5">
+          <dt class="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">Days pending</dt>
+          <dd class="tabular mt-0.5 text-sm font-medium">{{ days(a.daysPending) }}</dd>
+        </div>
+      </dl>
+    </header>
+
+    <div class="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <!-- Tabs -->
+      <div class="min-w-0">
+        <z-tab-group class="gap-6" (zTabChange)="onTabChange($event.index)">
+          <z-tab label="Status & history">
+            <div class="space-y-6 pt-2">
+              <section class="bg-card rounded-xl border p-5" aria-labelledby="current-status-h">
+                <h2 id="current-status-h" class="text-muted-foreground text-xs font-semibold tracking-wider uppercase">Current status</h2>
+                <p class="mt-2 text-lg font-semibold">{{ a.statusLabel }}</p>
+                <p class="text-muted-foreground mt-1 text-sm">{{ statusMeta()?.explanation }}</p>
+                <div class="text-muted-foreground mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs">
+                  @if (a.submittedAt) {
+                    <span><ng-icon name="lucideClock" class="mr-1 inline size-3.5 align-[-2px]" aria-hidden="true" />Filed {{ date(a.filingDate) }}</span>
+                  }
+                  @if (a.daysPending !== null) {
+                    <span>{{ days(a.daysPending) }} pending</span>
+                  }
+                  @if (a.publicationNumber) {
+                    <span>Publication {{ a.publicationNumber }} · {{ date(a.publicationDate) }}</span>
+                  }
+                  @if (a.patentNumber) {
+                    <span class="text-emerald-700 dark:text-emerald-400">Patent {{ a.patentNumber }} · issued {{ date(a.issueDate) }}</span>
+                  }
+                </div>
+              </section>
+              <section aria-labelledby="history-h">
+                <h2 id="history-h" class="mb-3 font-semibold">Prosecution history</h2>
+                @if (history.isLoading() && !history.hasValue()) {
+                  <div class="space-y-3">
+                    @for (i of [1, 2, 3]; track i) {
+                      <z-skeleton class="h-14 w-full" />
+                    }
+                  </div>
+                } @else if (history.error()) {
+                  <app-error-state [error]="history.error()" (retry)="history.reload()" />
+                } @else if (history.hasValue()) {
+                  <app-status-timeline [events]="history.value()" />
+                }
+              </section>
+            </div>
+          </z-tab>
+
+          <z-tab [label]="'Documents (' + docs().length + ')'">
+            <div class="pt-2">
+              @if (documents.error()) {
+                <app-error-state [error]="documents.error()" (retry)="documents.reload()" />
+              } @else if (documents.isLoading() && !documents.hasValue()) {
+                <z-skeleton class="h-48 w-full" />
+              } @else {
+                <app-documents-panel
+                  [app]="a"
+                  [documents]="docs()"
+                  [loading]="documents.isLoading()"
+                  (documentChange)="onUploadedDocument($event)"
+                  (documentRemoved)="onDocumentRemoved($event)"
+                  (reload)="documents.reload()"
+                />
+              }
+            </div>
+          </z-tab>
+
+          <z-tab label="Bibliographic data">
+            <div class="pt-2">
+              <app-biblio-tab [app]="a" (saved)="onUpdated($event)" (reloadRequested)="reloadAll()" />
+            </div>
+          </z-tab>
+
+          <z-tab [label]="'Inventors (' + a.inventors.length + ')'">
+            <div class="pt-2">
+              <app-inventors-tab [app]="a" (saved)="onUpdated($event)" (reloadRequested)="reloadAll()" />
+            </div>
+          </z-tab>
+        </z-tab-group>
+      </div>
+
+      <!-- Action panel -->
+      <aside class="space-y-4 lg:sticky lg:top-24 lg:self-start" aria-label="Actions">
+        @if (a.permissions.canSubmit || a.availableActions.length || a.permissions.canDelete) {
+          <z-card>
+            <z-card-header>
+              <z-card-title>Actions</z-card-title>
+              <z-card-description>
+                @if (a.status === 'DRAFT') {
+                  Upload the required documents, then submit.
+                } @else {
+                  Available to you in the current status.
+                }
+              </z-card-description>
+            </z-card-header>
+            <z-card-content class="space-y-2">
+              @if (a.permissions.canSubmit) {
+                @if (checklist(); as c) {
+                  <ul class="mb-3 space-y-1 text-xs" aria-label="Submission checklist">
+                    @for (item of c.items; track item.code) {
+                      <li class="flex items-center gap-2">
+                        <span class="size-1.5 rounded-full" [class]="item.present ? 'bg-emerald-500' : 'bg-destructive'" aria-hidden="true"></span>
+                        <span class="font-mono font-semibold">{{ item.code }}</span>
+                        <span [class]="item.present ? 'text-muted-foreground' : 'text-destructive'">{{ item.present ? 'uploaded' : 'missing' }}</span>
+                      </li>
+                    }
+                  </ul>
+                }
+                <button type="button" z-button zSize="lg" class="w-full" (click)="openSubmit()"><ng-icon name="lucideSend" aria-hidden="true" /> Submit application</button>
+              }
+              @for (act of a.availableActions; track act.action) {
+                <button
+                  type="button"
+                  z-button
+                  class="w-full justify-start"
+                  [zType]="act.destructive ? 'destructive' : $first && !a.permissions.canSubmit ? 'default' : 'outline'"
+                  (click)="openAction(act)"
+                >
+                  <ng-icon [name]="actionIcon(act)" aria-hidden="true" /> {{ act.label }}
+                </button>
+              }
+              @if (a.permissions.canDelete) {
+                <button type="button" z-button zType="ghost" class="text-destructive w-full justify-start" (click)="deleteDraft()">
+                  <ng-icon name="lucideTrash2" aria-hidden="true" /> Delete draft
+                </button>
+              }
+            </z-card-content>
+          </z-card>
+        }
+
+        <z-card>
+          <z-card-header>
+            <z-card-title>Records</z-card-title>
+          </z-card-header>
+          <z-card-content class="space-y-2 text-sm">
+            @if (isFiled()) {
+              <a z-button zType="outline" class="w-full justify-start" [routerLink]="['/applications', a.id, 'receipt']">
+                <ng-icon name="lucideReceipt" aria-hidden="true" /> Filing receipt
+              </a>
+            } @else {
+              <p class="text-muted-foreground text-xs">A filing receipt is issued when the application is submitted.</p>
+            }
+            @if (a.published && a.applicationNumber) {
+              <a z-button zType="outline" class="w-full justify-start" [routerLink]="['/status', a.applicationNumber]">
+                <ng-icon name="lucideExternalLink" aria-hidden="true" /> Public status page
+              </a>
+            }
+            <dl class="text-muted-foreground space-y-1 pt-2 text-xs">
+              <div class="flex justify-between gap-2"><dt>Owner</dt><dd class="text-foreground truncate">{{ a.owner.displayName }}</dd></div>
+              <div class="flex justify-between gap-2"><dt>Documents</dt><dd class="text-foreground">{{ docs().length }}</dd></div>
+              <div class="flex justify-between gap-2"><dt>Version</dt><dd class="text-foreground font-mono">{{ a.version }}</dd></div>
+            </dl>
+          </z-card-content>
+        </z-card>
+      </aside>
+    </div>
+  }
+</div>

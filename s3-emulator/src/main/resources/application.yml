@@ -1,0 +1,83 @@
+spring:
+  application:
+    name: s3-emulator
+  threads:
+    virtual:
+      enabled: true
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+  mvc:
+    # Never let Spring parse (and consume) a PUT body, whatever its Content-Type.
+    formcontent:
+      filter:
+        enabled: false
+  servlet:
+    multipart:
+      enabled: false
+
+server:
+  port: ${PORT:9000}
+  shutdown: graceful
+  error:
+    include-stacktrace: never
+    include-message: never
+  tomcat:
+    # Uploads are streamed; allow slow clients and large bodies.
+    connection-timeout: 60s
+    max-swallow-size: -1
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+
+info:
+  app:
+    name: s3-emulator
+    description: OpenFiling local Amazon S3 emulator (SigV4, path-style, event notifications)
+
+app:
+  storage-root: ${STORAGE_ROOT:../data/buckets}
+  region: ${S3_REGION:us-east-1}
+  access-key: ${S3_ACCESS_KEY:openfiling-local}
+  secret-key: ${S3_SECRET_KEY:openfiling-local-secret}
+  internal-token: ${INTERNAL_TOKEN:dev-internal-token-change-me}
+  max-object-bytes: ${MAX_OBJECT_BYTES:1GB}
+  clock-skew: 15m
+  buckets:
+    - openfiling-documents
+    - openfiling-public-copies
+  cors:
+    allowed-origins: ${CORS_ORIGINS:http://localhost:4200}
+    allowed-methods: GET, PUT, HEAD
+    exposed-headers: ETag, x-amz-request-id
+    max-age-seconds: 3600
+  notification-retry:
+    attempts: 3
+    initial-backoff: 500ms
+    request-timeout: 10s
+  notifications:
+    - name: redaction
+      bucket: openfiling-documents
+      prefix: public/
+      suffix: .pdf
+      url: ${REDACTION_INVOKE_URL:http://localhost:9001/2015-03-31/functions/openfiling-redaction/invocations}
+      headers:
+        "[X-Amz-Invocation-Type]": Event
+    - name: filing-api
+      bucket: openfiling-documents
+      url: ${FILING_API_EVENTS_URL:http://localhost:8080/internal/v1/storage/events}
+      headers:
+        "[X-Internal-Token]": ${app.internal-token}
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{requestId:-}]"
+  level:
+    gov.openfiling: info

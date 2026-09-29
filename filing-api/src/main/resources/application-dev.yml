@@ -1,0 +1,7 @@
+app:
+  seed:
+    enabled: ${SEED_ENABLED:true}
+
+logging:
+  level:
+    gov.openfiling: debug

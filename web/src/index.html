@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>OpenFiling — secure patent application filing &amp; status</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="OpenFiling: a free, open patent application intake and document management portal — secure direct-to-storage filing, role-based status tracking and automated PII/CUI redaction of public copies.">
+  <meta name="theme-color" content="#1f2a6b">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400..700;1,400&display=swap">
+  <script>
+    // Apply the persisted theme before first paint (no flash). Mirrors ZardDarkMode ('theme' key).
+    (function () {
+      try {
+        var t = localStorage.getItem('theme');
+        var dark = t === 'dark' || ((!t || t === 'system') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        if (dark) document.documentElement.classList.add('dark');
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <app-root></app-root>
+  <noscript>OpenFiling requires JavaScript. The REST API is documented at /swagger-ui.html.</noscript>
+</body>
+</html>

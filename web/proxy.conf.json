@@ -1,0 +1,7 @@
+{
+  "/api": { "target": "http://localhost:8080", "secure": false, "changeOrigin": false, "logLevel": "warn" },
+  "/v3": { "target": "http://localhost:8080", "secure": false, "logLevel": "warn" },
+  "/swagger-ui": { "target": "http://localhost:8080", "secure": false, "logLevel": "warn" },
+  "/swagger-ui.html": { "target": "http://localhost:8080", "secure": false, "logLevel": "warn" },
+  "/actuator": { "target": "http://localhost:8080", "secure": false, "logLevel": "warn" }
+}
